@@ -39,10 +39,10 @@ client.on('messageCreate', async (message) => {
                 {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        contents: [{ parts: [{ text: userPrompt }] }],
-                        systemInstruction: { parts: [{ text: BOT_PERSONALITY }] }
-                    })
+                   body: JSON.stringify({
+    contents: [{ parts: [{ text: userPrompt }] }],
+    system_instruction: { parts: [{ text: BOT_PERSONALITY }] }
+})
                 }
             );
 
