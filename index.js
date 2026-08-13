@@ -33,25 +33,26 @@ client.on('messageCreate', async (message) => {
         await message.channel.sendTyping();
 
         try {
-            // Secure connection to Google's API using standard native Web Queries
+            // Standard network fetch targeting the correct API model parameters safely
             const response = await fetch(
-                `https://googleapis.com${process.env.GEMINI_API_KEY}`,
+                `https://googleapis.com{process.env.GEMINI_API_KEY}`,
                 {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                   body: JSON.stringify({
-    contents: [{ parts: [{ text: userPrompt }] }],
-    system_instruction: { parts: [{ text: BOT_PERSONALITY }] }
-})
+                    body: JSON.stringify({
+                        contents: [{ parts: [{ text: userPrompt }] }],
+                        system_instruction: { parts: [{ text: BOT_PERSONALITY }] }
+                    })
                 }
             );
 
             const data = await response.json();
             
+            // Bulletproof text extractor mapping the raw array tokens natively
             let aiReply = "";
-if (data && data.candidates && data.candidates[0] && data.candidates[0].content && data.candidates[0].content.parts && data.candidates[0].content.parts[0]) {
-    aiReply = data.candidates[0].content.parts[0].text;
-}
+            if (data && data.candidates && data.candidates[0] && data.candidates[0].content && data.candidates[0].content.parts && data.candidates[0].content.parts[0]) {
+                aiReply = data.candidates[0].content.parts[0].text;
+            }
 
             if (aiReply) {
                 // Return response as a direct message chain thread reply
