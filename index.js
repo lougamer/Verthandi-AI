@@ -48,8 +48,10 @@ client.on('messageCreate', async (message) => {
 
             const data = await response.json();
             
-            // Extract the generated reply string safely out of Gemini's response formatting
-            const aiReply = data.candidates?.[0]?.content?.parts?.[0]?.text;
+            let aiReply = "";
+if (data && data.candidates && data.candidates[0] && data.candidates[0].content && data.candidates[0].content.parts && data.candidates[0].content.parts[0]) {
+    aiReply = data.candidates[0].content.parts[0].text;
+}
 
             if (aiReply) {
                 // Return response as a direct message chain thread reply
