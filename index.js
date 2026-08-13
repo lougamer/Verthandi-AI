@@ -35,8 +35,8 @@ client.on('messageCreate', async (message) => {
         try {
             // Standard network fetch targeting the correct API model parameters safely
             const response = await fetch(
-                `https://googleapis.com{process.env.GEMINI_API_KEY}`,
-                {
+    "https://googleapis.com" + process.env.GEMINI_API_KEY,
+    {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
