@@ -25,7 +25,7 @@ client.on('messageCreate', async (message) => {
 
         try {
             // Safe URL Assembly bypassing template backtick strings completely
-            const targetUrl = "https://googleapis.com" + process.env.GEMINI_API_KEY;
+            const targetUrl = "https://googleapis.com" + String(process.env.SECRET_GEMINI_KEY).trim();
 
             const response = await fetch(targetUrl, {
                 method: 'POST',
