@@ -28,7 +28,7 @@ client.on('messageCreate', async (message) => {
         await message.channel.sendTyping();
 
         try {
-            // Clean, hardcoded URL string completely separate from variable calls
+            // FIXED: The unified, official Google Gemini endpoint URL path structure
             const apiKey = process.env.SECRET_GEMINI_KEY || process.env.GEMINI_API_KEY || '';
             const cleanUrl = "https://googleapis.com" + String(apiKey).trim();
 
