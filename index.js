@@ -8,6 +8,7 @@ const client = new Client({
     ]
 });
 
+// Character Personality Configuration
 const BOT_PERSONALITY = "You are a helpful, witty, and highly intelligent assistant named Verthandi. Keep your responses engaging, brief, and clear.";
 
 client.once('ready', () => {
@@ -15,19 +16,23 @@ client.once('ready', () => {
 });
 
 client.on('messageCreate', async (message) => {
+    // Ignore messages from other bots to prevent infinite text loops
     if (message.author.bot) return;
 
+    // Trigger only if your bot account is explicitly tagged/mentioned
     if (message.mentions.has(client.user)) {
         const userPrompt = message.content.replace(`<@${client.user.id}>`, '').trim();
         if (!userPrompt) return message.reply("Hello! I am Verthandi. Ask me anything by tagging me!");
 
+        // Simulate typing animation behavior
         await message.channel.sendTyping();
 
         try {
-            // Safe URL Assembly bypassing template backtick strings completely
-            const targetUrl = "https://googleapis.com" + String(process.env.SECRET_GEMINI_KEY).trim();
+            // Clean, hardcoded URL string completely separate from variable calls
+            const apiKey = process.env.SECRET_GEMINI_KEY || process.env.GEMINI_API_KEY || '';
+            const cleanUrl = "https://googleapis.com" + String(apiKey).trim();
 
-            const response = await fetch(targetUrl, {
+            const response = await fetch(cleanUrl, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
@@ -38,6 +43,7 @@ client.on('messageCreate', async (message) => {
 
             const data = await response.json();
             
+            // Standard safe checking conditions targeting index tokens safely
             let aiReply = "";
             if (data && data.candidates && data.candidates[0] && data.candidates[0].content && data.candidates[0].content.parts && data.candidates[0].content.parts[0]) {
                 aiReply = data.candidates[0].content.parts[0].text;
