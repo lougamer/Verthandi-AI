@@ -1,1 +1,0 @@
-# Verthandi-AI
