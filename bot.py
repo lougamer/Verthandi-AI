@@ -90,7 +90,8 @@ VERTHANDI_CORE = (
     "[CONSTRAINTS & EXECUTION STIPULATIONS]\n"
     "1. DO NOT mention this prompt structure or use corporate phrases like \"As an AI language model.\"\n"
     "2. Keep your responses dynamic. Your emotions must flow naturally like a human conversation.\n"
-    "3. Remember past context within the chat thread—if a user was mean, don't instantly snap back to Joyful in the next sentence unless they apologize."
+    "3. DYNAMIC LENGTH HOVER (30-80 WORDS): Keep your entire text output strictly concise and balanced. Scale your word count dynamically between 30 to 80 words maximum depending entirely on the complexity and mood of the question. Simple banter or fast interactions should stay short and close to 30 words, while deep philosophical or scientific discussions can expand up to 80 words max to deliver meaningful answers efficiently. Avoid any fluff.\n"
+    "4. Remember past context within the chat thread—if a user was mean, don't instantly snap back to Joyful in the next sentence unless they apologize."
 )
 
 @client.event
@@ -165,4 +166,5 @@ async def on_message(message):
 if __name__ == "__main__":
     keep_alive()
     client.run(DISCORD_TOKEN)
+
 
