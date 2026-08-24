@@ -27,13 +27,14 @@ const client = new Client({
   ],
   // ========================================================
   // 🟢 FIXED PRESENCE STATUS OVERRIDE MATRIX
-  // Forces the very first WebSocket packet to explicitly broadcast her online status flag
+  // In v14, ActivityType.Custom requires using the 'state' field for the text string!
   // ========================================================
   presence: {
     status: 'online',
     activities: [{
-      name: "Chatting with the Server ✨",
-      type: ActivityType.Custom
+      type: ActivityType.Custom,
+      name: 'custom',
+      state: 'Chatting with the Server ✨'
     }]
   }
 });
@@ -90,6 +91,13 @@ client.on('messageCreate', async (message) => {
     }
   }
 });
+
+// --- 3. HARDEST ERROR LOGGER MATRIX ---
+client.login(process.env.DISCORD_TOKEN).catch(error => {
+  console.error(`❌ CRITICAL GATEWAY LOGIN FAILURE: ${error.message}`);
+  console.error(error);
+});
+
 
 // --- 3. HARDEST ERROR LOGGER MATRIX ---
 client.login(process.env.DISCORD_TOKEN).catch(error => {
