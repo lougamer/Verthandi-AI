@@ -24,25 +24,37 @@ const client = new Client({
     GatewayIntentBits.GuildMessages,      // Allows tracking of message updates inside channels
     GatewayIntentBits.MessageContent,     // Allows parsing text strings for your AI engine
     GatewayIntentBits.GuildVoiceStates    // Tracks voice activity channels
-  ],
-  // ========================================================
-  // 🟢 FIXED PRESENCE STATUS OVERRIDE MATRIX
-  // In v14, ActivityType.Custom requires using the 'state' field for the text string!
-  // ========================================================
-  presence: {
-    status: 'online',
-    activities: [{
-      type: ActivityType.Custom,
-      name: 'custom',
-      state: 'Chatting with the Server ✨'
-    }]
-  }
+  ]
 });
 
 const COMMAND_PREFIX = "?";
 
 client.once('ready', () => {
   console.log(`✅ Success! Verthandi logged in as ${client.user.tag}`);
+
+  // ========================================================
+  // 🟢 FORCED PERSISTENT REFRESH LOOP MATRIX
+  // Automatically resends her active presence state to Discord's gateway 
+  // every 10 seconds to punch through the Render IP cache block.
+  // ========================================================
+  const updatePresence = () => {
+    try {
+      client.user.setPresence({
+        status: 'online',
+        activities: [{
+          type: ActivityType.Custom,
+          name: 'custom',
+          state: 'Chatting with the Server ✨'
+        }]
+      });
+    } catch (err) {
+      console.error(`[Presence Refresh Error]: ${err.message}`);
+    }
+  };
+
+  // Run the update instantly on boot, then repeat it every 10 seconds
+  updatePresence();
+  setInterval(updatePresence, 10000);
 });
 
 client.on('messageCreate', async (message) => {
@@ -91,13 +103,6 @@ client.on('messageCreate', async (message) => {
     }
   }
 });
-
-// --- 3. HARDEST ERROR LOGGER MATRIX ---
-client.login(process.env.DISCORD_TOKEN).catch(error => {
-  console.error(`❌ CRITICAL GATEWAY LOGIN FAILURE: ${error.message}`);
-  console.error(error);
-});
-
 
 // --- 3. HARDEST ERROR LOGGER MATRIX ---
 client.login(process.env.DISCORD_TOKEN).catch(error => {
