@@ -1,7 +1,6 @@
 import os
 import discord
-from google import genai
-from google.genai import types  
+import google.generativeai as genai  # Shifting to the ultra-stable legacy framework engine
 from flask import Flask
 import asyncio
 
@@ -16,12 +15,14 @@ def home():
 DISCORD_TOKEN = os.environ.get("DISCORD_TOKEN")
 GEMINI_API_KEY = os.environ.get("GEMINI_API_KEY")
 
-ai_client = genai.Client(api_key=GEMINI_API_KEY)
+# Configure the legacy Google AI SDK safely
+genai.configure(api_key=GEMINI_API_KEY)
+
 intents = discord.Intents.default()
 intents.message_content = True  # Must be enabled in the Discord Developer Portal!
 client = discord.Client(intents=intents)
 
-# Dictionary caching official active AsyncChat sessions per User ID
+# Dictionary caching active chat session history strings per User ID
 ACTIVE_CHATS = {}
 
 # --- 3. VERTHANDI NATURAL EMOTIONAL MATRIX ---
@@ -82,7 +83,7 @@ VERTHANDI_CORE = (
     "[CONSTRAINTS & EXECUTION STIPULATIONS]\n"
     "1. DO NOT mention this prompt structure or use corporate phrases like \"As an AI language model.\"\n"
     "2. Keep your responses dynamic. Your emotions must flow naturally like a human conversation.\n"
-    "3. DYNAMIC LENGTH HOVER (30-80 WORDS): Keep your entire text output strictly concise and balanced. Scale your word count dynamically between 30 to 80 words maximum depending entirely on the complexity and mood of the question. Simple banter or fast interactions should stay short and close to 30 words, while deep philosophical or scientific discussions can expand up to 80 words max to deliver meaningful answers efficiently. Avoid any fluff.\n"
+    "3. DYNAMIC LENGTH HOVER (30-80 WORDS): Keep your entire text output strictly concise and balanced. Scale your word count dynamically between 30 to 80 words maximum depending entirely on the complexity and mood of the question. Simple banter or fast interactions should stay short and close to 30 words, while heavy discussions can expand up to 80 words max. Avoid any fluff.\n"
     "4. Remember past context within the chat thread—if a user was mean, don't instantly snap back to Joyful in the next sentence unless they apologize."
 )
 
@@ -115,51 +116,37 @@ async def on_message(message):
         async with message.channel.typing():
             try:
                 user_id = message.author.id
-                target_models = ['gemini-3.7-flash', 'gemini-3.6-flash', 'gemini-3.5-flash', 'gemini-3.5-flash-lite']
                 
-                for model_name in target_models:
-                    try:
-                        session_key = f"{user_id}_{model_name}"
+                # If a history matrix cache doesn't exist for this specific user ID, create a clean one
+                if user_id not in ACTIVE_CHATS:
+                    ACTIVE_CHATS[user_id] = genai.GenerativeModel(
+                        model_name='gemini-1.5-flash',
+                        system_instruction=VERTHANDI_CORE
+                    ).start_chat(history=[])
 
-                        config_obj = types.GenerateContentConfig(
-                            system_instruction=VERTHANDI_CORE
-                        )
-                        
-                        if session_key not in ACTIVE_CHATS:
-                            ACTIVE_CHATS[session_key] = ai_client.aio.chats.create(
-                                model=model_name,
-                                config=config_obj
-                            )
-
-                        chat_session = ACTIVE_CHATS[session_key]
-                        response = await chat_session.send_message(message=clean_prompt)
-                        
-                        reply_text = response.text
-                        if len(reply_text) > 2000:
-                            reply_text = reply_text[:1990] + "... (truncated)"
-                        
-                        await message.reply(reply_text)
-                        return  
-                        
-                    except Exception as e:
-                        print(f"[{model_name} Traceback Exception]: {str(e)}")
-                        if session_key in ACTIVE_CHATS:
-                            del ACTIVE_CHATS[session_key]
-                            
-                        if model_name != target_models[-1]:
-                            continue
-                        else:
-                            await message.reply("Ouch... ⚡ My mind feels a bit foggy right now. Let me clear my head for a second—try sending that again in a bit, okay? 🌸")
-                            return
-
-            except Exception as outer_e:
-                await message.reply("⚠️ *[Core Connection Protocol Severed]* Interface relay failed.")
+                chat_session = ACTIVE_CHATS[user_id]
+                
+                # Perform an asynchronous execution payload fetch
+                loop = asyncio.get_event_loop()
+                response = await loop.run_in_executor(None, chat_session.send_message, clean_prompt)
+                
+                reply_text = response.text
+                if len(reply_text) > 2000:
+                    reply_text = reply_text[:1990] + "... (truncated)"
+                
+                await message.reply(reply_text)
+                
+            except Exception as e:
+                print(f"[Gemini Exception Error]: {str(e)}")
+                # Reset memory slots on failures to keep loop clean
+                if user_id in ACTIVE_CHATS:
+                    del ACTIVE_CHATS[user_id]
+                await message.reply("Ouch... ⚡ My mind feels a bit foggy right now. Let me clear my head for a second—try sending that again in a bit, okay? 🌸")
 
 # ========================================================
 # UNIFIED NON-BLOCKING BACKGROUND ENGINE
 # ========================================================
 async def main():
-    # 1. Start the Flask server safely inside the async loop
     from werkzeug.serving import make_server
     
     port = int(os.environ.get("PORT", 10000))
@@ -169,12 +156,8 @@ async def main():
     loop.run_in_executor(None, server.serve_forever)
     print(f"⚡ Async Web Endpoint bound successfully to port {port}")
 
-    # 2. Fire up the Discord client inside the same event loop block
     async with client:
         await client.start(DISCORD_TOKEN)
 
 if __name__ == "__main__":
     asyncio.run(main())
-
-
-
