@@ -1,17 +1,19 @@
 import dotenv from 'dotenv';
+// FORCES THE CONTAINER TO INJECT RENDER'S ENVIRONMENT CARDS ON STEP ONE
 dotenv.config();
 
 import { Client, GatewayIntentBits, ActivityType } from 'discord.js';
 import http from 'http';
 import { askVerthandi } from './services/gemini.js';
 
-// --- 1. RENDER PROXY WEB SERVER ROUTING ---
+// --- 1. OPTIMIZED FIXED RENDER WEB SERVER ROUTING ---
 const server = http.createServer((req, res) => {
   res.writeHead(200, { 'Content-Type': 'text/plain' });
   res.end('⚡ Verthandi Core Logic Matrix: Online and Stable.\n');
 });
 
-const PORT = process.env.PORT || 10005;
+// FIXED: Adjusted to 10000 to match Render's network requirements exactly
+const PORT = process.env.PORT || 10000;
 server.listen(PORT, '0.0.0.0', () => {
   console.log(`⚡ Async Web Endpoint bound successfully to port ${PORT}`);
 });
@@ -19,10 +21,10 @@ server.listen(PORT, '0.0.0.0', () => {
 // --- 2. CONFIGURATION EXTRACTION & CHAT MANAGERS ---
 const client = new Client({
   intents: [
-    GatewayIntentBits.Guilds,
-    GatewayIntentBits.GuildMessages,
-    GatewayIntentBits.MessageContent,
-    GatewayIntentBits.GuildVoiceStates
+    GatewayIntentBits.Guilds,             // Mandatory core intent to register inside your server layout
+    GatewayIntentBits.GuildMessages,      // Allows tracking of message updates inside channels
+    GatewayIntentBits.MessageContent,     // Allows parsing text strings for your AI engine
+    GatewayIntentBits.GuildVoiceStates    // Tracks voice activity channels
   ],
   presence: {
     status: 'online',
@@ -42,6 +44,7 @@ const userCooldowns = new Map();
 client.once('ready', () => {
   console.log(`✅ Success! Verthandi logged in as ${client.user.tag}`);
 
+  // Persistent refresh loop to keep her socket punching through Render's network cache
   const updatePresence = () => {
     try {
       client.user.setPresence({
@@ -125,6 +128,7 @@ client.on('messageCreate', async (message) => {
   }
 });
 
+// --- 3. HARD ERROR LOGGER MATRIX ---
 client.login(process.env.DISCORD_TOKEN).catch(error => {
   console.error(`❌ CRITICAL GATEWAY LOGIN FAILURE: ${error.message}`);
   console.error(error);
