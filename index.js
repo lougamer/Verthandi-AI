@@ -1,18 +1,16 @@
 import dotenv from 'dotenv';
-// FORCES THE CONTAINER TO INJECT RENDER'S ENVIRONMENT CARDS ON STEP ONE
 dotenv.config();
 
 import { Client, GatewayIntentBits, ActivityType } from 'discord.js';
 import http from 'http';
 import { askVerthandi } from './services/gemini.js';
 
-// --- 1. OPTIMIZED ISOLATED RENDER WEB SERVER ROUTING ---
+// --- 1. RENDER PROXY WEB SERVER ROUTING ---
 const server = http.createServer((req, res) => {
   res.writeHead(200, { 'Content-Type': 'text/plain' });
   res.end('⚡ Verthandi Core Logic Matrix: Online and Stable.\n');
 });
 
-// Port isolated to 10005 to prevent collision loops with your other bots
 const PORT = process.env.PORT || 10005;
 server.listen(PORT, '0.0.0.0', () => {
   console.log(`⚡ Async Web Endpoint bound successfully to port ${PORT}`);
@@ -21,12 +19,11 @@ server.listen(PORT, '0.0.0.0', () => {
 // --- 2. CONFIGURATION EXTRACTION & CHAT MANAGERS ---
 const client = new Client({
   intents: [
-    GatewayIntentBits.Guilds,             // Mandatory core intent to register inside your server layout
-    GatewayIntentBits.GuildMessages,      // Allows tracking of message updates inside channels
-    GatewayIntentBits.MessageContent,     // Allows parsing text strings for your AI engine
-    GatewayIntentBits.GuildVoiceStates    // Tracks voice activity channels
+    GatewayIntentBits.Guilds,
+    GatewayIntentBits.GuildMessages,
+    GatewayIntentBits.MessageContent,
+    GatewayIntentBits.GuildVoiceStates
   ],
-  // Forces the very first WebSocket packet to explicitly broadcast her online status flag
   presence: {
     status: 'online',
     activities: [{
@@ -39,10 +36,12 @@ const client = new Client({
 
 const COMMAND_PREFIX = "?";
 
+// --- FREE COOLDOWN TRACKER ---
+const userCooldowns = new Map();
+
 client.once('ready', () => {
   console.log(`✅ Success! Verthandi logged in as ${client.user.tag}`);
 
-  // Persistent refresh loop to keep her socket punching through Render's network cache
   const updatePresence = () => {
     try {
       client.user.setPresence({
@@ -68,13 +67,31 @@ client.on('messageCreate', async (message) => {
   const mentionString = `<@${client.user.id}>`;
   const isReplyOrMention = message.content.includes(mentionString) || message.mentions.has(client.user);
 
-  // Trigger conversational AI logic on direct pings or inline replies
   if (isReplyOrMention && !message.content.startsWith(COMMAND_PREFIX)) {
     let cleanPrompt = message.content.replace(new RegExp(`<@!?${client.user.id}>`, 'g'), '').trim();
     
     if (!cleanPrompt) {
       return message.reply("✨ I'm here! What's on your mind? 🌸");
     }
+
+    // ========================================================
+    // 🛡️ FREE TIER PROTECTION FILTER
+    // Blocks users from spamming requests and freezing your free API key
+    // ========================================================
+    const userId = message.author.id;
+    const currentTime = Date.now();
+    const cooldownAmount = 5000; // 5 seconds in milliseconds
+
+    if (userCooldowns.has(userId)) {
+      const expirationTime = userCooldowns.get(userId) + cooldownAmount;
+      if (currentTime < expirationTime) {
+        const timeLeft = ((expirationTime - currentTime) / 1000).toFixed(1);
+        return message.reply(`Slow down a bit! 🌸 Give me ${timeLeft} more seconds to clear my thoughts before messaging again! ✨`);
+      }
+    }
+
+    // Set the cooldown timestamp for the user
+    userCooldowns.set(userId, currentTime);
 
     try {
       await message.channel.sendTyping();
@@ -85,7 +102,7 @@ client.on('messageCreate', async (message) => {
     }
   }
 
-  // Handle music prefix execution triggers or dedicated slash routing channels
+  // Handle prefix execution triggers
   if (message.content.startsWith(COMMAND_PREFIX)) {
     const args = message.content.slice(COMMAND_PREFIX.length).trim().split(/ +/);
     const commandName = args.shift().toLowerCase();
@@ -99,7 +116,6 @@ client.on('messageCreate', async (message) => {
       return message.reply(reply);
     }
 
-    // Music Command placeholders (Ready for your customized player.js bindings)
     if (commandName === 'playsong') {
       return message.reply("🎵 Parsing stream parameters... (Connect your custom player.js file here)");
     }
@@ -109,15 +125,8 @@ client.on('messageCreate', async (message) => {
   }
 });
 
-// --- 3. HARD ERROR LOGGER MATRIX ---
 client.login(process.env.DISCORD_TOKEN).catch(error => {
   console.error(`❌ CRITICAL GATEWAY LOGIN FAILURE: ${error.message}`);
   console.error(error);
 });
 
-
-// --- 3. HARDEST ERROR LOGGER MATRIX ---
-client.login(process.env.DISCORD_TOKEN).catch(error => {
-  console.error(`❌ CRITICAL GATEWAY LOGIN FAILURE: ${error.message}`);
-  console.error(error);
-});
