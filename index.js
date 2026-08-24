@@ -6,13 +6,14 @@ import { Client, GatewayIntentBits, ActivityType } from 'discord.js';
 import http from 'http';
 import { askVerthandi } from './services/gemini.js';
 
-// --- 1. OPTIMIZED RENDER PROXY WEB SERVER ROUTING ---
+// --- 1. OPTIMIZED ISOLATED RENDER WEB SERVER ROUTING ---
 const server = http.createServer((req, res) => {
   res.writeHead(200, { 'Content-Type': 'text/plain' });
   res.end('⚡ Verthandi Core Logic Matrix: Online and Stable.\n');
 });
 
-const PORT = process.env.PORT || 10000;
+// Port isolated to 10005 to prevent collision loops with your other bots
+const PORT = process.env.PORT || 10005;
 server.listen(PORT, '0.0.0.0', () => {
   console.log(`⚡ Async Web Endpoint bound successfully to port ${PORT}`);
 });
@@ -24,7 +25,16 @@ const client = new Client({
     GatewayIntentBits.GuildMessages,      // Allows tracking of message updates inside channels
     GatewayIntentBits.MessageContent,     // Allows parsing text strings for your AI engine
     GatewayIntentBits.GuildVoiceStates    // Tracks voice activity channels
-  ]
+  ],
+  // Forces the very first WebSocket packet to explicitly broadcast her online status flag
+  presence: {
+    status: 'online',
+    activities: [{
+      type: ActivityType.Custom,
+      name: 'custom',
+      state: 'Chatting with the Server ✨'
+    }]
+  }
 });
 
 const COMMAND_PREFIX = "?";
@@ -32,11 +42,7 @@ const COMMAND_PREFIX = "?";
 client.once('ready', () => {
   console.log(`✅ Success! Verthandi logged in as ${client.user.tag}`);
 
-  // ========================================================
-  // 🟢 FORCED PERSISTENT REFRESH LOOP MATRIX
-  // Automatically resends her active presence state to Discord's gateway 
-  // every 10 seconds to punch through the Render IP cache block.
-  // ========================================================
+  // Persistent refresh loop to keep her socket punching through Render's network cache
   const updatePresence = () => {
     try {
       client.user.setPresence({
@@ -52,7 +58,6 @@ client.once('ready', () => {
     }
   };
 
-  // Run the update instantly on boot, then repeat it every 10 seconds
   updatePresence();
   setInterval(updatePresence, 10000);
 });
@@ -103,6 +108,13 @@ client.on('messageCreate', async (message) => {
     }
   }
 });
+
+// --- 3. HARD ERROR LOGGER MATRIX ---
+client.login(process.env.DISCORD_TOKEN).catch(error => {
+  console.error(`❌ CRITICAL GATEWAY LOGIN FAILURE: ${error.message}`);
+  console.error(error);
+});
+
 
 // --- 3. HARDEST ERROR LOGGER MATRIX ---
 client.login(process.env.DISCORD_TOKEN).catch(error => {
