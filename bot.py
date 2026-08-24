@@ -173,13 +173,27 @@ async def start_bot():
             await client.start(DISCORD_TOKEN)
         except discord.errors.HTTPException as e:
             if e.status == 429:
-                print("⚠️ Render IP rate limit block detected (429). Backing off for 60 seconds...")
-                await asyncio.sleep(60)
+                print("⚠️ Render IP rate limit block detected (429). Cleaning session and backing off for 60 seconds...")
             else:
-                print(f"❌ Discord HTTPException raised: {e}")
-                await asyncio.sleep(15)
+                print(f"❌ Discord HTTPException raised: {e}. Cleaning session...")
+            
+            # CRITICAL: Cleanly close the dangling aiohttp session before looping back
+            try:
+                await client.close()
+            except Exception:
+                pass
+                
+            await asyncio.sleep(60 if e.status == 429 else 15)
+            
         except Exception as e:
-            print(f"⚠️ Network Disruption Encountered: {e}. Re-attempting handshake in 10 seconds...")
+            print(f"⚠️ Network Disruption Encountered: {e}. Resetting session and re-attempting in 10 seconds...")
+            
+            # CRITICAL: Cleanly close the dangling aiohttp session before looping back
+            try:
+                await client.close()
+            except Exception:
+                pass
+                
             await asyncio.sleep(10)
 
 if __name__ == "__main__":
@@ -187,4 +201,5 @@ if __name__ == "__main__":
         asyncio.run(start_bot())
     except KeyboardInterrupt:
         print("🛑 Verthandi offline.")
+
 
