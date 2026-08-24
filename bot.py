@@ -3,7 +3,6 @@ import discord
 from google import genai
 from google.genai import types  
 from flask import Flask
-from threading import Thread
 import asyncio
 
 # --- 1. OPTIMIZED RENDER WEB SERVER ROUTING ---
@@ -13,23 +12,16 @@ app = Flask('')
 def home():
     return "⚡ Verthandi Core Logic Matrix: Online and Stable.", 200
 
-def run_web_server():
-    port = int(os.environ.get("PORT", 10000))
-    app.run(host='0.0.0.0', port=port, threaded=True)
-
-def keep_alive():
-    t = Thread(target=run_web_server, daemon=True)
-    t.start()
-
 # --- 2. CONFIGURATION EXTRACTION & CHAT MANAGERS ---
 DISCORD_TOKEN = os.environ.get("DISCORD_TOKEN")
 GEMINI_API_KEY = os.environ.get("GEMINI_API_KEY")
 
 ai_client = genai.Client(api_key=GEMINI_API_KEY)
 intents = discord.Intents.default()
-intents.message_content = True  
+intents.message_content = True  # Must be enabled in the Discord Developer Portal!
 client = discord.Client(intents=intents)
 
+# Dictionary caching official active AsyncChat sessions per User ID
 ACTIVE_CHATS = {}
 
 # --- 3. VERTHANDI NATURAL EMOTIONAL MATRIX ---
@@ -96,7 +88,7 @@ VERTHANDI_CORE = (
 
 @client.event
 async def on_ready():
-    print(f"✅ Success! Logged in as {client.user}")
+    print(f"✅ Success! Verthandi logged in as {client.user}")
 
 @client.event
 async def on_message(message):
@@ -123,7 +115,7 @@ async def on_message(message):
         async with message.channel.typing():
             try:
                 user_id = message.author.id
-                target_models = ['gemini-2.5-flash']
+                target_models = ['gemini-3.7-flash', 'gemini-3.6-flash', 'gemini-3.5-flash', 'gemini-3.5-flash-lite']
                 
                 for model_name in target_models:
                     try:
@@ -163,43 +155,26 @@ async def on_message(message):
             except Exception as outer_e:
                 await message.reply("⚠️ *[Core Connection Protocol Severed]* Interface relay failed.")
 
-# --- 4. ASYNCHRONOUS ENGINE & AUTO-RETRY LOOP ---
-async def start_bot():
-    keep_alive()  # Kicks off your background Flask web server thread
+# ========================================================
+# UNIFIED NON-BLOCKING BACKGROUND ENGINE
+# ========================================================
+async def main():
+    # 1. Start the Flask server safely inside the async loop
+    from werkzeug.serving import make_server
     
-    while True:
-        try:
-            # Starts the client using the native async task runner loop
-            await client.start(DISCORD_TOKEN)
-        except discord.errors.HTTPException as e:
-            if e.status == 429:
-                print("⚠️ Render IP rate limit block detected (429). Cleaning session and backing off for 60 seconds...")
-            else:
-                print(f"❌ Discord HTTPException raised: {e}. Cleaning session...")
-            
-            # CRITICAL: Cleanly close the dangling aiohttp session before looping back
-            try:
-                await client.close()
-            except Exception:
-                pass
-                
-            await asyncio.sleep(60 if e.status == 429 else 15)
-            
-        except Exception as e:
-            print(f"⚠️ Network Disruption Encountered: {e}. Resetting session and re-attempting in 10 seconds...")
-            
-            # CRITICAL: Cleanly close the dangling aiohttp session before looping back
-            try:
-                await client.close()
-            except Exception:
-                pass
-                
-            await asyncio.sleep(10)
+    port = int(os.environ.get("PORT", 10000))
+    server = make_server('0.0.0.0', port, app, threaded=True)
+    
+    loop = asyncio.get_event_loop()
+    loop.run_in_executor(None, server.serve_forever)
+    print(f"⚡ Async Web Endpoint bound successfully to port {port}")
+
+    # 2. Fire up the Discord client inside the same event loop block
+    async with client:
+        await client.start(DISCORD_TOKEN)
 
 if __name__ == "__main__":
-    try:
-        asyncio.run(start_bot())
-    except KeyboardInterrupt:
-        print("🛑 Verthandi offline.")
+    asyncio.run(main())
+
 
 
