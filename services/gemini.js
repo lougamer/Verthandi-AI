@@ -5,7 +5,9 @@ dotenv.config();
 
 // Initialize the official Google AI Studio client configuration mapping
 const aiClient = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
-const activeChats = new Map();
+
+// Naming isolated to 'verthandiChats' to prevent data collision across multiple bots
+const verthandiChats = new Map();
 
 // --- VERTHANDI GLOBAL UNFILTERED EMOTIONAL CORE ---
 const VERTHANDI_CORE = `
@@ -72,9 +74,9 @@ MOOD STATE 5: 😳 EMBARRASSED & SHY / MATURE VULNERABILITY
 
 export async function askVerthandi(userId, userPrompt) {
   try {
-    if (!activeChats.has(userId)) {
+    if (!verthandiChats.has(userId)) {
       // Create a fresh AsyncChat instance using the Gemini 2.5 Flash model ecosystem
-      activeChats.set(userId, aiClient.chats.create({
+      verthandiChats.set(userId, aiClient.chats.create({
         model: 'gemini-2.5-flash',
         config: {
           systemInstruction: VERTHANDI_CORE,
@@ -88,13 +90,14 @@ export async function askVerthandi(userId, userPrompt) {
       }));
     }
 
-    const chatSession = activeChats.get(userId);
+    const chatSession = verthandiChats.get(userId);
     const response = await chatSession.sendMessage({ message: userPrompt });
     return response.text;
 
   } catch (error) {
     console.error(`[Gemini SDK Loop Exception]: ${error.message}`);
-    activeChats.delete(userId); // Clear memory cache context upon runtime errors
+    verthandiChats.delete(userId); // Clear memory cache context upon runtime errors
     return "Ouch... ⚡ My mind feels a bit foggy right now. Let me clear my head for a second—try sending that again in a bit, okay? 🌸";
   }
 }
+
