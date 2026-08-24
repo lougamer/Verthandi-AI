@@ -123,7 +123,7 @@ async def on_message(message):
         async with message.channel.typing():
             try:
                 user_id = message.author.id
-                target_models = ['gemini-2.5-flash'] # Switched to default 2026 production-grade flash model for stability
+                target_models = ['gemini-2.5-flash']
                 
                 for model_name in target_models:
                     try:
@@ -186,4 +186,5 @@ if __name__ == "__main__":
     try:
         asyncio.run(start_bot())
     except KeyboardInterrupt:
-print("🛑 Verthandi offline.")
+        print("🛑 Verthandi offline.")
+
