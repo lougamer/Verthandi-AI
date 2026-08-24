@@ -75,7 +75,7 @@ MOOD STATE 5: 😳 EMBARRASSED & SHY / MATURE VULNERABILITY
 export async function askVerthandi(userId, userPrompt) {
   try {
     if (!verthandiChats.has(userId)) {
-      // Create a fresh AsyncChat instance using the Gemini 2.5 Flash model ecosystem
+      // FIXED: Hardcoded to one single stable model endpoint to protect your free tier metrics
       verthandiChats.set(userId, aiClient.chats.create({
         model: 'gemini-2.5-flash',
         config: {
@@ -95,7 +95,7 @@ export async function askVerthandi(userId, userPrompt) {
     return response.text;
 
   } catch (error) {
-    console.error(`[Gemini SDK Loop Exception]: ${error.message}`);
+    console.error(`[Gemini SDK Stable Loop Exception]: ${error.message}`);
     verthandiChats.delete(userId); // Clear memory cache context upon runtime errors
     return "Ouch... ⚡ My mind feels a bit foggy right now. Let me clear my head for a second—try sending that again in a bit, okay? 🌸";
   }
