@@ -1,6 +1,6 @@
 import os
 import discord
-import google.generativeai as genai  # Shifting to the ultra-stable legacy framework engine
+import google.generativeai as genai
 from flask import Flask
 import asyncio
 
@@ -13,10 +13,10 @@ def home():
 
 # --- 2. CONFIGURATION EXTRACTION & CHAT MANAGERS ---
 DISCORD_TOKEN = os.environ.get("DISCORD_TOKEN")
-GEMINI_API_KEY = os.environ.get("GEMINI_API_KEY")
 
-# Configure the legacy Google AI SDK safely
-genai.configure(api_key=GEMINI_API_KEY)
+# By leaving this blank, the Google library will automatically search Render's 
+# global container environment for your key, avoiding silent Python hangs!
+genai.configure()
 
 intents = discord.Intents.default()
 intents.message_content = True  # Must be enabled in the Discord Developer Portal!
@@ -117,7 +117,6 @@ async def on_message(message):
             try:
                 user_id = message.author.id
                 
-                # If a history matrix cache doesn't exist for this specific user ID, create a clean one
                 if user_id not in ACTIVE_CHATS:
                     ACTIVE_CHATS[user_id] = genai.GenerativeModel(
                         model_name='gemini-1.5-flash',
@@ -126,7 +125,6 @@ async def on_message(message):
 
                 chat_session = ACTIVE_CHATS[user_id]
                 
-                # Perform an asynchronous execution payload fetch
                 loop = asyncio.get_event_loop()
                 response = await loop.run_in_executor(None, chat_session.send_message, clean_prompt)
                 
@@ -138,7 +136,6 @@ async def on_message(message):
                 
             except Exception as e:
                 print(f"[Gemini Exception Error]: {str(e)}")
-                # Reset memory slots on failures to keep loop clean
                 if user_id in ACTIVE_CHATS:
                     del ACTIVE_CHATS[user_id]
                 await message.reply("Ouch... ⚡ My mind feels a bit foggy right now. Let me clear my head for a second—try sending that again in a bit, okay? 🌸")
@@ -161,3 +158,4 @@ async def main():
 
 if __name__ == "__main__":
     asyncio.run(main())
+
