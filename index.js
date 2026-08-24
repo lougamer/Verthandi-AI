@@ -2,7 +2,7 @@ import dotenv from 'dotenv';
 // FORCES THE CONTAINER TO INJECT RENDER'S ENVIRONMENT CARDS ON STEP ONE
 dotenv.config();
 
-import { Client, GatewayIntentBits } from 'discord.js';
+import { Client, GatewayIntentBits, ActivityType } from 'discord.js';
 import http from 'http';
 import { askVerthandi } from './services/gemini.js';
 
@@ -20,19 +20,28 @@ server.listen(PORT, '0.0.0.0', () => {
 // --- 2. CONFIGURATION EXTRACTION & CHAT MANAGERS ---
 const client = new Client({
   intents: [
-    GatewayIntentBits.Guilds,             // <-- MANDATORY CORE INTENT: Must be active for v14 bots!
+    GatewayIntentBits.Guilds,             // Mandatory core intent to register inside your server layout
     GatewayIntentBits.GuildMessages,      // Allows tracking of message updates inside channels
     GatewayIntentBits.MessageContent,     // Allows parsing text strings for your AI engine
     GatewayIntentBits.GuildVoiceStates    // Tracks voice activity channels
-  ]
+  ],
+  // ========================================================
+  // 🟢 FIXED PRESENCE STATUS OVERRIDE MATRIX
+  // Forces the very first WebSocket packet to explicitly broadcast her online status flag
+  // ========================================================
+  presence: {
+    status: 'online',
+    activities: [{
+      name: "Chatting with the Server ✨",
+      type: ActivityType.Custom
+    }]
+  }
 });
 
 const COMMAND_PREFIX = "?";
 
 client.once('ready', () => {
   console.log(`✅ Success! Verthandi logged in as ${client.user.tag}`);
-  // Establishes a customized active presence display status on startup
-  client.user.setActivity('Chatting with the Server ✨', { type: 3 }); // Listening type
 });
 
 client.on('messageCreate', async (message) => {
@@ -87,6 +96,3 @@ client.login(process.env.DISCORD_TOKEN).catch(error => {
   console.error(`❌ CRITICAL GATEWAY LOGIN FAILURE: ${error.message}`);
   console.error(error);
 });
-
-
-
