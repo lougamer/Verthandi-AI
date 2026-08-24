@@ -123,7 +123,7 @@ async def on_message(message):
         async with message.channel.typing():
             try:
                 user_id = message.author.id
-                target_models = ['gemini-3.7-flash', 'gemini-3.6-flash', 'gemini-3.5-flash', 'gemini-3.5-flash-lite']
+                target_models = ['gemini-2.5-flash'] # Switched to default 2026 production-grade flash model for stability
                 
                 for model_name in target_models:
                     try:
@@ -163,8 +163,27 @@ async def on_message(message):
             except Exception as outer_e:
                 await message.reply("⚠️ *[Core Connection Protocol Severed]* Interface relay failed.")
 
+# --- 4. ASYNCHRONOUS ENGINE & AUTO-RETRY LOOP ---
+async def start_bot():
+    keep_alive()  # Kicks off your background Flask web server thread
+    
+    while True:
+        try:
+            # Starts the client using the native async task runner loop
+            await client.start(DISCORD_TOKEN)
+        except discord.errors.HTTPException as e:
+            if e.status == 429:
+                print("⚠️ Render IP rate limit block detected (429). Backing off for 60 seconds...")
+                await asyncio.sleep(60)
+            else:
+                print(f"❌ Discord HTTPException raised: {e}")
+                await asyncio.sleep(15)
+        except Exception as e:
+            print(f"⚠️ Network Disruption Encountered: {e}. Re-attempting handshake in 10 seconds...")
+            await asyncio.sleep(10)
+
 if __name__ == "__main__":
-    keep_alive()
-    client.run(DISCORD_TOKEN)
-
-
+    try:
+        asyncio.run(start_bot())
+    except KeyboardInterrupt:
+print("🛑 Verthandi offline.")
