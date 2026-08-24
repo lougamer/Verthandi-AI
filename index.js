@@ -20,10 +20,10 @@ server.listen(PORT, '0.0.0.0', () => {
 // --- 2. CONFIGURATION EXTRACTION & CHAT MANAGERS ---
 const client = new Client({
   intents: [
-    GatewayIntentBits.Guilds,
-    GatewayIntentBits.GuildMessages,
-    GatewayIntentBits.MessageContent,
-    GatewayIntentBits.GuildVoiceStates
+    GatewayIntentBits.Guilds,             // <-- MANDATORY CORE INTENT: Must be active for v14 bots!
+    GatewayIntentBits.GuildMessages,      // Allows tracking of message updates inside channels
+    GatewayIntentBits.MessageContent,     // Allows parsing text strings for your AI engine
+    GatewayIntentBits.GuildVoiceStates    // Tracks voice activity channels
   ]
 });
 
@@ -87,5 +87,6 @@ client.login(process.env.DISCORD_TOKEN).catch(error => {
   console.error(`❌ CRITICAL GATEWAY LOGIN FAILURE: ${error.message}`);
   console.error(error);
 });
+
 
 
