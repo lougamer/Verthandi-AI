@@ -1,9 +1,10 @@
-import { Client, GatewayIntentBits } from 'discord.js';
 import dotenv from 'dotenv';
+// FORCES THE CONTAINER TO INJECT RENDER'S ENVIRONMENT CARDS ON STEP ONE
+dotenv.config();
+
+import { Client, GatewayIntentBits } from 'discord.js';
 import http from 'http';
 import { askVerthandi } from './services/gemini.js';
-
-dotenv.config();
 
 // --- 1. OPTIMIZED RENDER PROXY WEB SERVER ROUTING ---
 const server = http.createServer((req, res) => {
@@ -82,9 +83,9 @@ client.on('messageCreate', async (message) => {
 });
 
 // --- 3. HARDEST ERROR LOGGER MATRIX ---
-// This forces Render's console output window to explicitly print out connection faults
 client.login(process.env.DISCORD_TOKEN).catch(error => {
   console.error(`❌ CRITICAL GATEWAY LOGIN FAILURE: ${error.message}`);
   console.error(error);
 });
+
 
