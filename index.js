@@ -1,6 +1,6 @@
 import dotenv from 'dotenv';
-// FORCES THE CONTAINER TO INJECT RENDER'S ENVIRONMENT CARDS ON STEP ONE
 dotenv.config();
+import process from 'process'; // FORCES NODE.JS TO SECURELY READ ENVIRONMENT VARIABLES
 
 import { Client, GatewayIntentBits, ActivityType } from 'discord.js';
 import http from 'http';
@@ -12,7 +12,7 @@ const server = http.createServer((req, res) => {
   res.end('⚡ Verthandi Core Logic Matrix: Online and Stable.\n');
 });
 
-// FIXED: Adjusted to 10000 to match Render's network requirements exactly
+// Adjusted to 10000 to match Render's requirements exactly
 const PORT = process.env.PORT || 10000;
 server.listen(PORT, '0.0.0.0', () => {
   console.log(`⚡ Async Web Endpoint bound successfully to port ${PORT}`);
@@ -133,4 +133,3 @@ client.login(process.env.DISCORD_TOKEN).catch(error => {
   console.error(`❌ CRITICAL GATEWAY LOGIN FAILURE: ${error.message}`);
   console.error(error);
 });
-
