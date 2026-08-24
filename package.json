@@ -1,0 +1,16 @@
+{
+  "name": "rinnebot-discord-verthandi",
+  "version": "1.0.0",
+  "type": "module",
+  "main": "index.js",
+  "scripts": {
+    "start": "node index.js"
+  },
+  "dependencies": {
+    "discord.js": "^14.14.1",
+    "@discordjs/voice": "^0.16.1",
+    "@google/genai": "^0.1.1",
+    "dotenv": "^16.4.5",
+    "libsodium-wrappers": "^0.7.13"
+  }
+}
