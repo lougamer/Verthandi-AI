@@ -81,4 +81,10 @@ client.on('messageCreate', async (message) => {
   }
 });
 
-client.login(process.env.DISCORD_TOKEN);
+// --- 3. HARDEST ERROR LOGGER MATRIX ---
+// This forces Render's console output window to explicitly print out connection faults
+client.login(process.env.DISCORD_TOKEN).catch(error => {
+  console.error(`❌ CRITICAL GATEWAY LOGIN FAILURE: ${error.message}`);
+  console.error(error);
+});
+
